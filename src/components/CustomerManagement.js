@@ -42,10 +42,13 @@ const CustomerManagement = ({ onSelectCustomer }) => {
     message: '',
     severity: 'success',
   });
+// Line 48: Add fetchCustomers to dependency array OR use useCallback
+useEffect(() => {
+  fetchCustomers();
+}, [fetchCustomers]); // Add fetchCustomers here
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
+// Line 85: Remove unnecessary escape characters
+const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
 
   const fetchCustomers = async () => {
     try {

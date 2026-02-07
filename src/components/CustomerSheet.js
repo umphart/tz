@@ -17,12 +17,9 @@ const CustomerSheet = ({ customer, onBack }) => {
     severity: 'success',
   });
 
-  useEffect(() => {
-    if (customer && customer.id) {
-      fetchTransactions();
-      fetchProducts();
-    }
-  }, [customer]);
+useEffect(() => {
+  fetchTransactions();
+}, [fetchTransactions]); // Add fetchTransactions here
 
   const fetchTransactions = async () => {
     try {

@@ -44,9 +44,9 @@ const ProductManagement = () => {
     severity: 'success', // 'success', 'error', 'warning', 'info'
   });
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+ useEffect(() => {
+  fetchProducts();
+}, [fetchProducts]); // Add fetchProducts here
 
   const fetchProducts = async () => {
     try {

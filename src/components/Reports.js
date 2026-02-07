@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Paper,
   Box,
@@ -16,23 +16,19 @@ import {
   Chip,
   Card,
   CardContent,
-  Divider,
   TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   CircularProgress,
-  Alert,
   IconButton,
   Tooltip,
 } from '@mui/material';
 import {
-  Download as DownloadIcon,
   PictureAsPdf as PdfIcon,
   GridOn as ExcelIcon,
   Print as PrintIcon,
-  CalendarToday as CalendarIcon,
   TrendingUp as TrendingUpIcon,
   People as PeopleIcon,
   Inventory as InventoryIcon,
@@ -57,15 +53,11 @@ const Reports = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  useEffect(() => {
-    fetchReportData();
-  }, [dateRange, startDate, endDate]);
-
-  const fetchReportData = async () => {
+  const fetchReportData = useCallback(async () => {
     try {
       setLoading(true);
 
-      // Build date filter
+      // Build date filter (though it's not used in current implementation)
       let dateFilter = {};
       if (dateRange === 'month') {
         const start = startOfMonth(new Date());
@@ -78,6 +70,9 @@ const Reports = () => {
       } else if (dateRange === 'custom' && startDate && endDate) {
         dateFilter = { created_at: { gte: startDate, lte: endDate } };
       }
+
+      // Note: dateFilter is not currently used in the queries below
+      // but kept for future implementation
 
       // Fetch all data in parallel
       const [
@@ -155,7 +150,11 @@ const Reports = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange, startDate, endDate]);
+
+  useEffect(() => {
+    fetchReportData();
+  }, [fetchReportData]);
 
   const getDateRangeText = () => {
     switch (dateRange) {
@@ -318,6 +317,11 @@ const Reports = () => {
           });
         }
         break;
+        
+      default:
+        // Handle default case
+        doc.text('No data available for export', 20, yPos);
+        break;
     }
     
     // Save PDF
@@ -459,6 +463,15 @@ const Reports = () => {
           XLSX.utils.book_append_sheet(workbook, productListSheet, 'Products');
         }
         break;
+        
+      default:
+        // Handle default case
+        const defaultData = [
+          ['No data available for export']
+        ];
+        const defaultSheet = XLSX.utils.aoa_to_sheet(defaultData);
+        XLSX.utils.book_append_sheet(workbook, defaultSheet, 'Data');
+        break;
     }
     
     // Save Excel
@@ -466,7 +479,6 @@ const Reports = () => {
   };
 
   const handlePrint = () => {
-    const printContent = document.getElementById('report-content');
     const printWindow = window.open('', '_blank');
     
     // Get tab content based on active tab
@@ -486,6 +498,9 @@ const Reports = () => {
         break;
       case 4:
         tabContent = generatePrintContentForProductList();
+        break;
+      default:
+        tabContent = '<h2>No data available for printing</h2>';
         break;
     }
     
@@ -540,7 +555,7 @@ const Reports = () => {
 
   // Helper functions for print content
   const generatePrintContentForCustomerSpending = () => {
-    if (!reportData.summary?.customerSpending?.length) return '';
+    if (!reportData.summary?.customerSpending?.length) return '<h2>No customer spending data available</h2>';
     
     let tableContent = `
       <h2>Customer Spending Report</h2>
@@ -572,7 +587,7 @@ const Reports = () => {
   };
 
   const generatePrintContentForProductBuy = () => {
-    if (!reportData.summary?.productPurchases?.length) return '';
+    if (!reportData.summary?.productPurchases?.length) return '<h2>No product buy data available</h2>';
     
     let tableContent = `
       <h2>Product Buy Report</h2>
@@ -604,7 +619,7 @@ const Reports = () => {
   };
 
   const generatePrintContentForTransactions = () => {
-    if (!reportData.transactions?.length) return '';
+    if (!reportData.transactions?.length) return '<h2>No transaction data available</h2>';
     
     let tableContent = `
       <h2>Recent Transactions Report</h2>
@@ -638,7 +653,7 @@ const Reports = () => {
   };
 
   const generatePrintContentForCustomerList = () => {
-    if (!reportData.customers?.length) return '';
+    if (!reportData.customers?.length) return '<h2>No customer data available</h2>';
     
     let tableContent = `
       <h2>Customer List Report</h2>
@@ -670,7 +685,7 @@ const Reports = () => {
   };
 
   const generatePrintContentForProductList = () => {
-    if (!reportData.products?.length) return '';
+    if (!reportData.products?.length) return '<h2>No product data available</h2>';
     
     let tableContent = `
       <h2>Product List Report</h2>
@@ -700,8 +715,6 @@ const Reports = () => {
     tableContent += '</tbody></table>';
     return tableContent;
   };
-
-  // ... rest of your component remains the same ...
 
   return (
     <Box>
@@ -793,11 +806,6 @@ const Reports = () => {
           </Grid>
         </Grid>
       </Paper>
-
-      {/* Content for printing */}
-      <div id="report-content" style={{ display: 'none' }}>
-        {/* This is now generated dynamically in handlePrint function */}
-      </div>
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
