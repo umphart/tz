@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Paper,
   Table,
@@ -42,15 +42,16 @@ const CustomerManagement = ({ onSelectCustomer }) => {
     message: '',
     severity: 'success',
   });
-// Line 48: Add fetchCustomers to dependency array OR use useCallback
-useEffect(() => {
-  fetchCustomers();
-}, [fetchCustomers]); // Add fetchCustomers here
 
-// Line 85: Remove unnecessary escape characters
-const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
+  const showSnackbar = useCallback((message, severity = 'success') => {
+    setSnackbar({
+      open: true,
+      message,
+      severity,
+    });
+  }, []);
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -75,7 +76,14 @@ const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
     } finally {
       setLoading(false);
     }
-  };
+  }, [showSnackbar]);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
+
+  // Line 85: Remove unnecessary escape characters
+  const phoneRegex = /^\+?[\d\s\-()]+$/;
 
   const handleSubmit = async () => {
     if (!newCustomer.name || !newCustomer.name.trim()) {
@@ -191,13 +199,6 @@ const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
     setError('');
   };
 
-  const showSnackbar = (message, severity = 'success') => {
-    setSnackbar({
-      open: true,
-      message,
-      severity,
-    });
-  };
 
   const handleCloseSnackbar = (event, reason) => {
     if (reason === 'clickaway') return;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Grid, Typography, Snackbar, Alert, Button } from '@mui/material';
 import { supabase } from '../config/supabase';
 import CustomerSheetHeader from './CustomerSheetHeader';
@@ -17,11 +17,15 @@ const CustomerSheet = ({ customer, onBack }) => {
     severity: 'success',
   });
 
-useEffect(() => {
-  fetchTransactions();
-}, [fetchTransactions]); // Add fetchTransactions here
+  const showSnackbar = useCallback((message, severity = 'success') => {
+    setSnackbar({
+      open: true,
+      message,
+      severity,
+    });
+  }, []);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -45,9 +49,13 @@ useEffect(() => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [customer.id, showSnackbar]);
 
-  const fetchProducts = async () => {
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  const fetchProducts = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -60,7 +68,8 @@ useEffect(() => {
     } catch (error) {
       console.error('Error fetching products:', error);
     }
-  };
+  }, []);
+
 
   const handleAddProduct = async (transactionData) => {
     try {
@@ -137,13 +146,6 @@ useEffect(() => {
     });
   };
 
-  const showSnackbar = (message, severity = 'success') => {
-    setSnackbar({
-      open: true,
-      message,
-      severity,
-    });
-  };
 
   const handleCloseSnackbar = (event, reason) => {
     if (reason === 'clickaway') return;
